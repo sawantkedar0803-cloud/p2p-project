@@ -2,11 +2,13 @@ import os
 import mysql.connector
 from flask import Flask, render_template, request
 
-base_dir = os.path.abspath(os.path.dirname(__file__))
-app = Flask(__name__,
-            template_folder=os.path.join(base_dir, 'templates'),
-            static_folder=os.path.join(base_dir, 'static'))
+# --- THE 100% BULLETPROOF VERCEL FIX ---
+# This automatically finds your HTML and Video files whether they are in folders or not!
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates') if os.path.exists(os.path.join(BASE_DIR, 'templates')) else BASE_DIR
+STATIC_DIR = os.path.join(BASE_DIR, 'static') if os.path.exists(os.path.join(BASE_DIR, 'static')) else BASE_DIR
 
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 def get_db_connection():
     return mysql.connector.connect(
         host="gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
