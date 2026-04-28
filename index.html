@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institutional P2P Allocation | Financial Engineering</title>
+
+    <!-- Chart.js and Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Playfair Display (Serif) & Inter (Sans-Serif) for Corporate Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* JPMorgan Chase Inspired Color Palette & Theme */
+        :root {
+            --jpm-navy: #0B172A;
+            --jpm-navy-light: #1A2B4C;
+            --jpm-gold: #A67C00;
+            --jpm-gold-hover: #8A6700;
+            --jpm-bg: #F7F9FA;
+            --jpm-border: #E2E8F0;
+            --jpm-text-main: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--jpm-bg);
+            color: var(--jpm-text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, .serif-heading {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .bg-navy { background-color: var(--jpm-navy); }
+        .text-navy { color: var(--jpm-navy); }
+        .bg-gold { background-color: var(--jpm-gold); }
+        .text-gold { color: var(--jpm-gold); }
+        .border-gold { border-color: var(--jpm-gold); }
+
+        .hover-gold:hover { background-color: var(--jpm-gold-hover); }
+        .hover-navy:hover { background-color: var(--jpm-navy-light); }
+
+        .step-active { border-bottom: 3px solid var(--jpm-gold); color: var(--jpm-navy); font-weight: 600; }
+        .step-inactive { border-bottom: 3px solid transparent; color: #94A3B8; }
+
+        /* Professional Inputs */
+        input, select {
+            border: 1px solid var(--jpm-border);
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus {
+            border-color: var(--jpm-navy);
+            outline: none;
+            box-shadow: 0 0 0 1px var(--jpm-navy);
+        }
+
+        /* Executive Table Styles */
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th {
+            background-color: #FFFFFF;
+            color: var(--jpm-navy);
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            border-bottom: 2px solid var(--jpm-navy);
+        }
+        .admin-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--jpm-border);
+            color: var(--jpm-text-main);
+            font-size: 0.875rem;
+            background-color: #FFFFFF;
+        }
+        .admin-table tr:hover td { background-color: #F8FAFC; }
+
+        /* Corporate Buttons */
+        .btn-corporate {
+            border-radius: 2px;
+            font-weight: 500;
+            letter-spacing: 0.025em;
+            transition: all 0.2s;
+        }
+
+        /* Card Styles */
+        .corp-card {
+            background: #FFFFFF;
+            border: 1px solid var(--jpm-border);
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top utility bar (Corporate style) -->
+    <div class="bg-gray-100 border-b border-gray-200 py-1 px-8 text-xs text-gray-500 flex justify-end gap-6 hidden md:flex">
+        <span>Commercial Banking</span>
+        <span>Corporate & Investment Bank</span>
+        <span>Asset & Wealth Management</span>
+    </div>
+
+    <!-- Professional Executive Header -->
+    <header class="bg-navy text-white sticky top-0 z-50 shadow-md">
+        <div class="w-full px-4 sm:px-8 lg:px-12 py-5 flex justify-between items-center">
+
+            <!-- Logo & Title (Left aligned) -->
+            <div class="flex items-center gap-4 cursor-pointer flex-1" onclick="showSection('landing')">
+                <div class="w-10 h-10 border border-gold flex items-center justify-center shrink-0">
+                    <span class="text-gold font-bold text-lg serif-heading">P2P</span>
+                </div>
+                <div class="border-l border-gray-600 pl-4">
+                    <h1 class="text-xl font-bold tracking-wide serif-heading hidden lg:block whitespace-nowrap">Algorithmic Lending Engine</h1>
+                    <h1 class="text-xl font-bold tracking-wide serif-heading lg:hidden">ALE</h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest mt-1 hidden lg:block">Institutional Liquidity Solutions</p>
+                </div>
+            </div>
+
+            <!-- Main Navigation Links (Centered) -->
+            <div class="hidden xl:flex gap-8 items-center justify-center flex-1">
+                <button onclick="showSection('landing')" class="text-sm font-medium hover:text-gold transition whitespace-nowrap">Home</button>
+                <button onclick="alert('How It Works section under development.')" class="text-sm font-medium text-gray-300 hover:text-gold transition whitespace-nowrap">How It Works</button>
+                <button onclick="showSection('market-stats')" class="text-sm font-medium text-gray-300 hover:text-gold transition whitespace-nowrap">Market Statistics</button>
+                <button onclick="showSection('compliance')" class="text-sm font-medium text-gray-300 hover:text-gold transition whitespace-nowrap">Compliance & Legal</button>
+                <button onclick="showSection('about')" class="text-sm font-medium text-gray-300 hover:text-gold transition whitespace-nowrap">About Us</button>
+            </div>
+
+            <!-- Authentication / CTA Buttons (Right aligned) -->
+            <div class="flex gap-4 lg:gap-6 items-center justify-end flex-1">
+                <button onclick="showSection('login')" class="text-sm font-medium hover:text-gold transition whitespace-nowrap">Client Login</button>
+                <button onclick="showSection('onboarding')" class="text-sm font-medium bg-gold text-white px-6 py-2.5 btn-corporate hover-gold transition whitespace-nowrap">Open Account</button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow w-full">
+
+        <!-- LANDING SECTION -->
+        <div id="landing" class="block animate-fade-in">
+
+            <!-- HERO VIDEO SECTION -->
+            <div class="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden mb-16">
+                <!-- Background Video -->
+                <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0">
+                    <source src="{{ url_for('static', filename='Fintech_Network.mp4') }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+
+                <!-- Dark Overlay to make text readable -->
+                <div class="absolute inset-0 bg-[#0B172A]/75 z-10"></div>
+
+                <!-- Hero Content -->
+                <div class="relative z-20 p-8 md:p-20 flex flex-col items-center text-center w-full">
+                    <span class="text-gold uppercase tracking-widest text-sm font-bold mb-4">Enterprise Grade Infrastructure</span>
+                    <h2 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 serif-heading leading-tight text-white">Institutional Liquidity <br>Routing Pool</h2>
+                    <p class="text-gray-300 max-w-3xl mx-auto mb-10 text-lg md:text-xl font-light leading-relaxed">
+                        Our platform enforces strict KYC norms, dynamic credit grading, and automated ACID-compliant matching algorithms. To interact with the allocation engine, entities must complete the multi-tier onboarding protocol.
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto">
+                        <button onclick="showSection('onboarding')" class="bg-gold text-white px-10 py-4 btn-corporate hover-gold transition text-lg shadow-lg">
+                            Initialize Onboarding
+                        </button>
+                        <button onclick="showSection('login')" class="bg-transparent border border-white text-white px-10 py-4 btn-corporate hover:bg-white hover:text-navy transition text-lg backdrop-blur-sm">
+                            Client Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Value Props (Contained max-width) -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 pb-16">
+                <div class="corp-card p-8 border-t-4 border-gold">
+                    <h3 class="serif-heading text-xl font-bold text-navy mb-3">Algorithmic Matching</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Automated capital deployment based on rigid investor mandates and real-time borrower risk assessments.</p>
+                </div>
+                <div class="corp-card p-8 border-t-4 border-navy">
+                    <h3 class="serif-heading text-xl font-bold text-navy mb-3">ACID Compliant Ledger</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">All transactions strictly adhere to database normalization rules, ensuring capital integrity and zero double-spending.</p>
+                </div>
+                <div class="corp-card p-8 border-t-4 border-gold">
+                    <h3 class="serif-heading text-xl font-bold text-navy mb-3">Institutional KYC</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed">Multi-tier identity verification integrated directly into the deployment logic for maximum regulatory compliance.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MARKET STATISTICS SECTION -->
+        <div id="market-stats" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-10 animate-fade-in">
+            <div class="max-w-5xl mx-auto">
+                <div class="mb-10 text-center">
+                    <h2 class="text-3xl font-bold text-navy serif-heading mb-2">Market Statistics & Performance</h2>
+                    <p class="text-sm text-gray-500">Live indicators of our institutional capital deployment engine.</p>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <div class="corp-card p-6 border-l-4 border-navy text-center">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Pool Liquidity</p>
+                        <p class="text-3xl font-bold text-navy serif-heading">₹ 22.5M+</p>
+                    </div>
+                    <div class="corp-card p-6 border-l-4 border-gold text-center">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Average Annual Yield</p>
+                        <p class="text-3xl font-bold text-navy serif-heading">14.2%</p>
+                    </div>
+                    <div class="corp-card p-6 border-l-4 border-navy text-center">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Platform Default Rate</p>
+                        <p class="text-3xl font-bold text-green-700 serif-heading">0.00%</p>
+                    </div>
+                    <div class="corp-card p-6 border-l-4 border-gold text-center">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Active Syndicates</p>
+                        <p class="text-3xl font-bold text-navy serif-heading">47</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Chart -->
+                <div class="corp-card p-8">
+                    <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+                        <h3 class="font-bold text-navy serif-heading text-xl">Historical Liquidity Growth</h3>
+                        <span class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-sm font-medium">Trailing 6 Months</span>
+                    </div>
+                    <div class="relative h-80 w-full">
+                        <canvas id="publicLiquidityChart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-4 text-center italic">* Data is aggregated and anonymized strictly according to platform regulatory guidelines.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPLIANCE & LEGAL SECTION -->
+        <div id="compliance" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-10 animate-fade-in">
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-8 text-center">
+                    <h2 class="text-3xl font-bold text-navy serif-heading mb-2">Compliance & Legal Disclosures</h2>
+                    <p class="text-sm text-gray-500">Regulatory framework and operational guidelines for institutional participants.</p>
+                </div>
+
+                <div class="corp-card overflow-hidden">
+                    <div class="p-8 md:p-10 space-y-8 text-gray-700">
+                        <div>
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">Risk Disclosure</h3>
+                            <p class="text-sm leading-relaxed">All lending involves risk. Capital deployed through this platform is uncollateralized, meaning there is a risk of default. Past performance of the algorithm does not guarantee future returns.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">Regulatory KYC / AML</h3>
+                            <p class="text-sm leading-relaxed">To prevent money laundering and fraud, every institution and individual must pass strict Know Your Customer (KYC) checks using verified government IDs (PAN and Aadhaar) before accessing the liquidity pool.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">Data Privacy & Security</h3>
+                            <p class="text-sm leading-relaxed">Your financial data is securely stored in a normalized, highly secure database. We do not sell your data to third-party marketers.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">Platform's Role</h3>
+                            <p class="text-sm leading-relaxed">The Algorithmic Lending Engine acts purely as a technology facilitator (a bridge). We do not act as a bank, nor do we hold your funds for our own investments.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">Algorithmic Transparency</h3>
+                            <p class="text-sm leading-relaxed">Capital allocation is strictly done by our ACID-compliant mathematical engine based on your exact Return on Investment (ROI) and risk settings. There is zero human bias in who gets funded.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABOUT US SECTION -->
+        <div id="about" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-10 animate-fade-in">
+            <div class="max-w-5xl mx-auto">
+                <div class="mb-8 text-center">
+                    <h2 class="text-3xl font-bold text-navy serif-heading mb-2">System Architecture & Vision</h2>
+                    <p class="text-sm text-gray-500">The engineering behind the Algorithmic Lending Engine.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Text Content -->
+                    <div class="md:col-span-2 space-y-6">
+                        <div class="corp-card p-8">
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">The Vision</h3>
+                            <p class="text-sm text-gray-700 leading-relaxed">This platform was engineered to solve the inherent inefficiencies in traditional institutional banking. By leveraging advanced Database Management Systems (DBMS), the Algorithmic Lending Engine eliminates manual bottlenecks, ensuring rapid, bias-free, and mandate-driven capital deployment.</p>
+                        </div>
+                        <div class="corp-card p-8">
+                            <h3 class="text-xl font-bold text-navy serif-heading mb-3 border-b border-gray-200 pb-2">The Technology Stack</h3>
+                            <p class="text-sm text-gray-700 leading-relaxed">The core allocation engine is powered by a robust MySQL database backend. Routing logic is facilitated via Python/Flask, with strict ACID-compliant transaction rules (Atomicity, Consistency, Isolation, Durability) guaranteeing zero double-spending and absolute ledger integrity.</p>
+                        </div>
+                    </div>
+
+                    <!-- Developer Profile -->
+                    <div class="corp-card p-8 text-center flex flex-col items-center justify-center border-t-4 border-gold">
+                        <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-navy mb-4 shadow-lg bg-gray-100 flex items-center justify-center">
+                            <!-- FETCHING FROM LOCAL STATIC FOLDER INSTEAD OF DRIVE -->
+                            <img src="{{ url_for('static', filename='profile.jpg') }}" alt="Kedar Sawant" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=Kedar+Sawant&background=0B172A&color=fff&size=128'">
+                        </div>
+                        <h3 class="text-2xl font-bold text-navy serif-heading">Kedar Sawant</h3>
+                        <p class="text-xs text-gold uppercase tracking-widest font-bold mt-1 mb-3">Lead Architect (Solo)</p>
+                        <p class="text-sm text-gray-600 mb-6">Vidyalankar Institute Of Technology</p>
+
+                        <a href="https://www.linkedin.com/in/kedar-sawant-891968340/" target="_blank" class="w-full bg-navy text-white font-medium py-2.5 btn-corporate hover-navy transition shadow-sm flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                            Connect on LinkedIn
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONBOARDING WIZARD (CORPORATE STYLE) -->
+        <div id="onboarding" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 mt-10">
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-8 text-center">
+                    <h2 class="text-3xl font-bold text-navy serif-heading mb-2">Institutional Onboarding</h2>
+                    <p class="text-sm text-gray-500">Complete the required regulatory protocols to access the liquidity pool.</p>
+                </div>
+
+                <div class="corp-card overflow-hidden">
+                    <!-- Wizard Navigation -->
+                    <div class="flex bg-gray-50 border-b border-gray-200 overflow-x-auto">
+                        <button type="button" id="tab-basic" class="flex-1 px-4 py-4 text-sm font-medium step-active focus:outline-none transition whitespace-nowrap" onclick="switchTab('basic')">1. Entity Basics</button>
+                        <button type="button" id="tab-kyc" class="flex-1 px-4 py-4 text-sm font-medium step-inactive focus:outline-none transition whitespace-nowrap" onclick="switchTab('kyc')">2. Regulatory KYC</button>
+                        <button type="button" id="tab-profile" class="flex-1 px-4 py-4 text-sm font-medium step-inactive focus:outline-none transition whitespace-nowrap" onclick="switchTab('profile')">3. Financial Profile</button>
+                        <button type="button" id="tab-agreement" class="flex-1 px-4 py-4 text-sm font-medium step-inactive focus:outline-none transition whitespace-nowrap" onclick="switchTab('agreement')">4. Compliance</button>
+                    </div>
+
+                    <div class="p-8 md:p-10">
+                        <!-- Form ID set for JS Interception -->
+                        <form id="registrationForm">
+
+                            <!-- STEP 1: BASIC INFO -->
+                            <div id="step-basic" class="block space-y-6 animate-fade-in">
+                                <h3 class="text-xl font-bold text-navy serif-heading mb-6 pb-2 border-b border-gray-200">Entity Identification</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Legal Name</label><input type="text" name="full_name" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Corporate Email</label><input type="email" name="email" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Contact Number</label><input type="tel" name="mobile" class="w-full p-2.5 text-sm" required></div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Account Type</label>
+                                        <select id="user_type" name="user_type" class="w-full p-2.5 text-sm bg-white" onchange="updateProfileView()" required>
+                                            <option value="">-- Select Classification --</option>
+                                            <option value="lender">Capital Provider (Investor)</option>
+                                            <option value="borrower">Borrowing Entity</option>
+                                        </select>
+                                    </div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">System Password</label><input type="password" name="password" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Confirm Password</label><input type="password" class="w-full p-2.5 text-sm" required></div>
+                                </div>
+                                <div class="pt-6 flex justify-end">
+                                    <button type="button" onclick="validateAndSwitch('step-basic', 'kyc')" class="bg-navy text-white px-8 py-2.5 btn-corporate text-sm hover-navy">Proceed to KYC</button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2: KYC -->
+                            <div id="step-kyc" class="hidden space-y-6 animate-fade-in">
+                                <h3 class="text-xl font-bold text-navy serif-heading mb-6 pb-2 border-b border-gray-200">Regulatory Verification</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Inception / DOB</label><input type="date" name="dob" class="w-full p-2.5 text-sm" required></div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Classification</label>
+                                        <select name="gender" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="Male">Individual (Male)</option>
+                                            <option value="Female">Individual (Female)</option>
+                                            <option value="Other">Corporate / Non-Ind</option>
+                                        </select>
+                                    </div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tax ID (PAN)</label><input type="text" name="pan" class="w-full p-2.5 text-sm uppercase" maxlength="10" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Gov ID (Aadhaar/CIN)</label><input type="text" name="aadhaar" class="w-full p-2.5 text-sm" maxlength="12" required></div>
+
+                                    <div class="md:col-span-3 mt-4"><h4 class="text-sm font-bold text-navy uppercase tracking-wider border-b border-gray-100 pb-2">Document Uploads</h4></div>
+                                    <div><label class="block text-xs text-gray-500 mb-1">Tax Document Scan</label><input type="file" name="pan_file" class="text-xs w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-navy hover:file:bg-gray-200" required></div>
+                                    <div><label class="block text-xs text-gray-500 mb-1">Gov ID Scan</label><input type="file" name="aadhaar_file" class="text-xs w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-navy hover:file:bg-gray-200" required></div>
+                                    <div><label class="block text-xs text-gray-500 mb-1">Live Verification</label><input type="file" name="selfie_file" class="text-xs w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-navy hover:file:bg-gray-200" required></div>
+
+                                    <div class="md:col-span-3 mt-4"><h4 class="text-sm font-bold text-navy uppercase tracking-wider border-b border-gray-100 pb-2">Registered Address</h4></div>
+                                    <div class="md:col-span-3"><input type="text" name="street" placeholder="Street Address / Building" class="w-full p-2.5 text-sm" required></div>
+                                    <div><input type="text" name="city" placeholder="City" class="w-full p-2.5 text-sm" required></div>
+                                    <div><input type="text" name="state" placeholder="State/Province" class="w-full p-2.5 text-sm" required></div>
+                                    <div><input type="text" name="pincode" placeholder="Postal Code" class="w-full p-2.5 text-sm" required></div>
+                                </div>
+                                <div class="pt-6 flex justify-between border-t border-gray-200 mt-8">
+                                    <button type="button" onclick="switchTab('basic')" class="bg-white border border-gray-300 text-gray-700 px-8 py-2.5 btn-corporate text-sm hover:bg-gray-50">Back</button>
+                                    <button type="button" onclick="validateAndSwitch('step-kyc', 'profile')" class="bg-navy text-white px-8 py-2.5 btn-corporate text-sm hover-navy">Proceed to Profile</button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 3: FINANCIAL PROFILE -->
+                            <div id="step-profile" class="hidden space-y-6 animate-fade-in">
+                                <h3 class="text-xl font-bold text-navy serif-heading mb-6 pb-2 border-b border-gray-200">Financial Profiling</h3>
+
+                                <div id="alert-role" class="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-sm mb-4 text-sm font-medium">
+                                    Please assign a Classification (Capital Provider or Borrower) in Step 1 to configure your profile.
+                                </div>
+
+                                <!-- Borrower Fields -->
+                                <div id="fields-borrower" class="hidden grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2"><h4 class="text-sm font-bold text-gold uppercase tracking-wider border-b border-gray-100 pb-2">Credit Assessment Data</h4></div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Employment / Nature</label>
+                                        <select name="emp_type" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="Salaried">Salaried Professional</option>
+                                            <option value="Self-employed">Self-Employed / Business</option>
+                                            <option value="Student">Academic</option>
+                                            <option value="Unemployed">Other</option>
+                                        </select>
+                                    </div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Monthly Revenue (₹)</label><input type="number" name="monthly_income" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Entity / Employer Name</label><input type="text" name="company" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Operating History (Yrs)</label><input type="number" name="work_exp" class="w-full p-2.5 text-sm" required></div>
+
+                                    <div class="md:col-span-2 mt-4"><h4 class="text-sm font-bold text-gold uppercase tracking-wider border-b border-gray-100 pb-2">Facility Requirements</h4></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Capital Requested (₹)</label><input type="number" name="loan_amount" class="w-full p-2.5 text-sm" required></div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Primary Purpose</label>
+                                        <select name="purpose" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="Business">Working Capital</option>
+                                            <option value="Education">Educational</option>
+                                            <option value="Medical">Medical Facility</option>
+                                            <option value="Personal">General Purpose</option>
+                                        </select>
+                                    </div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Desired Term (Months)</label><input type="number" name="tenure" class="w-full p-2.5 text-sm" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Expected Rate (%)</label><input type="number" step="0.1" name="expected_interest" class="w-full p-2.5 text-sm" required></div>
+
+                                    <div class="md:col-span-2 mt-4"><h4 class="text-sm font-bold text-gold uppercase tracking-wider border-b border-gray-100 pb-2">Existing Obligations</h4></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Current Liabilities / Mo (₹)</label><input type="number" name="existing_emi" class="w-full p-2.5 text-sm" value="0" required></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Self-Reported Credit Score</label><input type="number" name="cibil" class="w-full p-2.5 text-sm" placeholder="e.g. 750"></div>
+                                </div>
+
+                                <!-- Lender Fields -->
+                                <div id="fields-lender" class="hidden grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2"><h4 class="text-sm font-bold text-gold uppercase tracking-wider border-b border-gray-100 pb-2">Investment Mandate Configuration</h4></div>
+                                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Committed Capital (₹)</label><input type="number" name="invest_amount" class="w-full p-2.5 text-sm" required></div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Risk Appetite</label>
+                                        <select name="risk_appetite" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="Low">Conservative (Grade A Only)</option>
+                                            <option value="Medium">Balanced (Grades A & B)</option>
+                                            <option value="High">Aggressive (All Grades)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Yield Range (%)</label>
+                                        <select name="roi_range" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">--Select--</option>
+                                            <option value="10-12">10% - 12% (Conservative)</option>
+                                            <option value="13-15">13% - 15% (Balanced)</option>
+                                            <option value="16-20">16% - 20% (Aggressive)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Algorithmic Routing</label>
+                                        <select name="auto_invest" class="w-full p-2.5 text-sm bg-white" required>
+                                            <option value="">--Select--</option>
+                                            <option value="yes">Authorized (Auto-Allocate)</option>
+                                            <option value="no">Manual Execution Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="pt-6 flex justify-between border-t border-gray-200 mt-8">
+                                    <button type="button" onclick="switchTab('kyc')" class="bg-white border border-gray-300 text-gray-700 px-8 py-2.5 btn-corporate text-sm hover:bg-gray-50">Back</button>
+                                    <button type="button" onclick="validateAndSwitch('step-profile', 'agreement')" class="bg-navy text-white px-8 py-2.5 btn-corporate text-sm hover-navy">Proceed to Compliance</button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 4: AGREEMENT -->
+                            <div id="step-agreement" class="hidden space-y-6 animate-fade-in">
+                                <h3 class="text-xl font-bold text-navy serif-heading mb-6 pb-2 border-b border-gray-200">Legal & Compliance Disclosure</h3>
+
+                                <div class="bg-gray-50 p-6 rounded-sm text-sm text-gray-700 space-y-4 h-48 overflow-y-scroll border border-gray-200 font-serif leading-relaxed">
+                                    <p><strong>Article I - Risk Disclosure:</strong> Participation in the institutional liquidity pool involves inherent credit risks, including the potential loss of principal. The platform's algorithmic engine is designed to optimize routing but does not guarantee performance or eliminate default risk.</p>
+                                    <p><strong>Article II - Data Governance:</strong> Execution of this agreement grants the institution irrevocable consent to interface with authorized Credit Information Companies (CICs) to evaluate creditworthiness dynamically.</p>
+                                    <p><strong>Article III - Transaction Integrity:</strong> Capital routing is strictly bound by ACID-compliant database architecture. Funds committed to the liquidity pool are locked exclusively for algorithmic matching according to configured mandates.</p>
+                                </div>
+
+                                <div class="space-y-4 mt-6 bg-white p-6 border border-gray-200 rounded-sm">
+                                    <label class="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" required class="mt-1 w-4 h-4 text-navy">
+                                        <span class="text-sm text-gray-700">I execute this agreement, accepting all Master Terms & Conditions governing the platform.</span>
+                                    </label>
+                                    <label class="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" required class="mt-1 w-4 h-4 text-navy">
+                                        <span class="text-sm font-semibold text-red-700">I acknowledge the risk parameters associated with uncollateralized capital deployment.</span>
+                                    </label>
+                                    <label class="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" required class="mt-1 w-4 h-4 text-navy">
+                                        <span class="text-sm text-gray-700">I authorize third-party regulatory data sharing for KYC compliance.</span>
+                                    </label>
+                                </div>
+
+                                <div class="mt-8 flex justify-between border-t border-gray-200 pt-6">
+                                    <button type="button" onclick="switchTab('profile')" class="bg-white border border-gray-300 text-gray-700 px-8 py-3 btn-corporate text-sm hover:bg-gray-50">Return to Profile</button>
+                                    <button type="button" id="btn-final-reg" onclick="finalizeRegistration()" class="bg-gold text-white font-bold px-10 py-3 btn-corporate hover-gold transition shadow-md flex items-center justify-center">
+                                        Execute Final Registration
+                                    </button>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: PREMIUM REGISTRATION SUCCESS MODAL/SECTION -->
+        <div id="registration-success" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 mt-10 animate-fade-in flex justify-center">
+            <div class="corp-card p-10 md:p-16 text-center max-w-2xl w-full border-t-4 border-gold shadow-lg">
+                <div class="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-green-100">
+                    <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-3xl font-bold text-navy serif-heading mb-4">Registration Successful</h2>
+                <p class="text-gray-600 mb-10 leading-relaxed">
+                    Your institutional entity has been securely provisioned in our ACID-compliant ledger. You may now authenticate via the Client Access Portal to monitor and manage your mandates.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4 border-t border-gray-100 pt-8">
+                    <button onclick="showSection('login')" class="bg-navy text-white px-8 py-3 btn-corporate hover-navy transition shadow-sm font-medium">
+                        Proceed to Secure Sign In
+                    </button>
+                    <button onclick="showSection('landing')" class="bg-white border border-gray-300 text-gray-700 px-8 py-3 btn-corporate hover:bg-gray-50 transition font-medium">
+                        Return to Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGIN SECTION -->
+        <div id="login" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="max-w-md mx-auto corp-card overflow-hidden mt-10">
+                <div class="bg-navy p-6 text-center">
+                    <h2 class="text-2xl font-bold text-white serif-heading">Client Authentication</h2>
+                    <p class="text-xs text-gray-300 mt-2 tracking-widest uppercase">Secure Access Portal</p>
+                </div>
+
+                <form action="/login" method="POST" class="p-8 space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Email Address</label>
+                        <input type="email" id="login-email" name="email" required class="w-full py-2.5 px-3 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Password</label>
+                        <input type="password" id="login-pass" name="password" required class="w-full py-2.5 px-3 text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-navy text-white font-medium py-3 btn-corporate hover-navy transition shadow-sm mt-4">
+                        Secure Sign In
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD SECTION -->
+        <div id="admin-dashboard" class="hidden w-full px-4 sm:px-8 lg:px-12 py-10">
+            <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
+                <!-- Executive Sidebar (Now properly left-aligned) -->
+                <div class="w-full md:w-64 flex flex-col shrink-0 h-full gap-4">
+                    <div class="corp-card p-6 border-l-4 border-navy">
+                        <h3 class="serif-heading font-bold text-navy text-xl mb-6">Administrator</h3>
+                        <ul class="space-y-4 text-sm font-medium text-gray-600">
+                            <li onclick="showAdminOverview()" class="hover:text-gold cursor-pointer flex items-center gap-3 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                                System Overview
+                            </li>
+                            <li onclick="toggleAnalytics()" class="hover:text-gold cursor-pointer flex items-center gap-3 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                Global Analytics
+                            </li>
+                            <li onclick="showAdminOverview()" class="hover:text-gold cursor-pointer flex items-center gap-3 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                Manage Borrowers
+                            </li>
+                            <li onclick="showAdminOverview()" class="hover:text-gold cursor-pointer flex items-center gap-3 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08-.402-2.599-1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Capital Investors
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="corp-card p-6 bg-navy text-white">
+                        <p class="text-xs text-gray-400 mb-1 uppercase tracking-wider">Total System Liquidity</p>
+                        <p class="text-2xl font-bold text-gold serif-heading">₹ 22,50,000</p>
+                    </div>
+
+                    <button onclick="showSection('landing')" class="mt-2 text-sm font-medium text-gray-500 hover:text-navy transition text-left px-2">Secure Log Out</button>
+                </div>
+
+                <!-- Main Content (Takes up remaining width) -->
+                <div class="flex-1 space-y-8">
+                    <div class="border-b border-gray-300 pb-4">
+                        <h2 class="text-3xl font-bold text-navy serif-heading" id="admin-page-title">Global Liquidity Pool</h2>
+                        <p class="text-sm text-gray-500 mt-2" id="admin-page-subtitle">Live Algorithmic Allocation Overview</p>
+                    </div>
+
+                    <!-- REAL-TIME ANALYTICS CHARTS (HIDDEN BY DEFAULT) -->
+                    <div id="analytics-section" class="hidden animate-fade-in">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="corp-card p-6">
+                                <h3 class="font-bold text-navy text-sm uppercase tracking-wider mb-6 text-center">Capital Distribution</h3>
+                                <div class="relative h-64 w-full flex justify-center">
+                                    <canvas id="capitalChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="corp-card p-6">
+                                <h3 class="font-bold text-navy text-sm uppercase tracking-wider mb-6 text-center">Investors by Risk Segment</h3>
+                                <div class="relative h-64 w-full flex justify-center">
+                                    <canvas id="riskChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABLES SECTION (VISIBLE BY DEFAULT) -->
+                    <div id="admin-tables-view" class="space-y-8 block animate-fade-in">
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            <!-- Borrower Data Table -->
+                            <div class="corp-card overflow-hidden">
+                                <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                    <h3 class="font-bold text-navy serif-heading">Active Borrowers</h3>
+                                    <span class="bg-gray-200 text-gray-700 text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm font-bold">Risk Graded</span>
+                                </div>
+                                <div class="overflow-x-auto h-80 overflow-y-scroll">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Entity Name</th>
+                                                <th>Type</th>
+                                                <th class="text-right">Req. Cap. (₹)</th>
+                                                <th class="text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if borrowers %}
+                                                {% for b in borrowers %}
+                                                <tr>
+                                                    <td class="text-xs text-gray-500 font-mono">#{{ b[0] }}</td>
+                                                    <td class="font-medium text-navy">{{ b[1] }}</td>
+                                                    <td class="text-gray-500 text-xs">{{ b[2] }}</td>
+                                                    <td class="text-right font-medium">{{ "{:,.0f}".format(b[3]) if b[3] else 0 }}</td>
+                                                    <td class="text-center">
+                                                        {% set needed = b[3] or 0 %}
+                                                        {% set funded = b[5] or 0 %}
+                                                        {% set gap = needed - funded %}
+
+                                                        {% if funded >= needed and needed > 0 %}
+                                                            <span class="text-green-700 text-xs font-bold bg-green-50 px-2 py-1 border border-green-200 rounded-sm">FILLED</span>
+                                                        {% elif funded > 0 %}
+                                                            <span class="text-gold text-xs font-bold bg-yellow-50 px-2 py-1 border border-yellow-200 rounded-sm">PARTIAL</span>
+                                                        {% else %}
+                                                            <span class="text-gray-500 text-xs font-bold bg-gray-50 px-2 py-1 border border-gray-200 rounded-sm">OPEN</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Investor Data Table -->
+                            <div class="corp-card overflow-hidden">
+                                <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                                    <h3 class="font-bold text-navy serif-heading">Registered Capital Providers</h3>
+                                    <span class="bg-navy text-white text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm font-bold">Authorized</span>
+                                </div>
+                                <div class="overflow-x-auto h-80 overflow-y-scroll">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Provider Name</th>
+                                                <th>Tgt. ROI</th>
+                                                <th class="text-right">Deployed (₹)</th>
+                                                <th class="text-center">Auto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if lenders %}
+                                                {% for l in lenders %}
+                                                <tr>
+                                                    <td class="text-xs text-gray-500 font-mono">#{{ l[0] }}</td>
+                                                    <td class="font-medium text-navy">{{ l[1] }}</td>
+                                                    <td class="text-xs text-gray-600">{{ l[2] }}% - {{ l[3] }}%</td>
+                                                    <td class="text-right font-medium text-navy">{{ "{:,.0f}".format(l[4]) if l[4] else 0 }}</td>
+                                                    <td class="text-center">
+                                                        {% if l[5]|lower == 'yes' %}
+                                                            <span class="text-navy text-xs font-bold border-b border-navy">YES</span>
+                                                        {% else %}
+                                                            <span class="text-gray-400 text-xs font-bold">NO</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DIVERSIFICATION LEDGER TABLE -->
+                        <div class="corp-card overflow-hidden">
+                            <div class="p-5 border-b border-gray-200 bg-gray-50">
+                                <h3 class="font-bold text-navy serif-heading">Master Diversification Ledger</h3>
+                                <p class="text-xs text-gray-500 mt-1">Live Database Mappings & Executed Contracts</p>
+                            </div>
+                            <div class="overflow-x-auto h-72 overflow-y-scroll">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Txn Ref</th>
+                                            <th>Provider</th>
+                                            <th>Receiving Entity</th>
+                                            <th class="text-right">Capital (₹)</th>
+                                            <th>Yield</th>
+                                            <th>Tenure</th>
+                                            <th>Timestamp</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if mappings %}
+                                            {% for m in mappings %}
+                                            <tr>
+                                                <td class="text-xs text-gray-400 font-mono">TRX-{{ m[5] }}</td>
+                                                <td class="font-medium text-navy">{{ m[0] }}</td>
+                                                <td class="text-gray-600">{{ m[1] }}</td>
+                                                <td class="text-right font-medium text-navy">{{ "{:,.0f}".format(m[2]) if m[2] else 0 }}</td>
+                                                <td class="text-gold font-bold">{{ m[3] }}%</td>
+                                                <td class="text-xs text-gray-500">{{ m[6] }} Mos</td>
+                                                <td class="text-xs text-gray-400">{{ m[4] }}</td>
+                                                <td class="text-center">
+                                                    <a href="/invoice/{{ m[5] }}" target="_blank" class="text-navy hover:text-gold text-xs font-bold uppercase tracking-wide border-b border-transparent hover:border-gold transition pb-1">
+                                                        Invoice
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr><td colspan="8" class="text-center text-gray-400 py-8 italic text-sm">No institutional allocations recorded. Engine awaits execution.</td></tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row gap-4 justify-end border-t border-gray-200 pt-6">
+                            <form action="/run_engine" method="POST">
+                                <button type="submit" class="w-full md:w-auto bg-navy text-white font-medium px-8 py-3 btn-corporate hover-navy transition shadow-sm flex items-center gap-2 justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                    Execute Allocation Engine
+                                </button>
+                            </form>
+
+                            <form action="/simulate_emi" method="POST">
+                                <button type="submit" class="w-full md:w-auto bg-transparent border border-navy text-navy font-medium px-8 py-3 btn-corporate hover:bg-navy hover:text-white transition shadow-sm flex items-center gap-2 justify-center">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Simulate EMI Cycle
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVESTOR (LENDER) PORTFOLIO DASHBOARD -->
+        <div id="lender-dashboard" class="hidden w-full px-4 sm:px-8 lg:px-12 py-10">
+            <div class="border-b border-gray-300 pb-4 mb-8">
+                <p class="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Institutional Investor</p>
+                <h2 class="text-3xl font-bold text-navy serif-heading">Asset Portfolio</h2>
+                <p class="text-gray-600 mt-2">Welcome, <span class="font-medium text-navy">{{ user_name }}</span></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="corp-card p-6 border-t-4 border-navy">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Liquid Capital</p>
+                    <p class="text-3xl font-bold text-navy serif-heading">₹ {{ "{:,.0f}".format(profile[0]) if profile and profile[0] else '0' }}</p>
+                </div>
+                <div class="corp-card p-6 border-t-4 border-gold">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Target Yield Mandate</p>
+                    <p class="text-3xl font-bold text-navy serif-heading">{{ profile[1] if profile else '0' }}% <span class="text-lg text-gray-400 font-sans font-light mx-1">-</span> {{ profile[2] if profile else '0' }}%</p>
+                </div>
+                <div class="corp-card p-6 border-t-4 border-gray-300">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Auto-Routing</p>
+                    <p class="text-3xl font-bold text-navy serif-heading">{{ profile[3]|upper if profile else 'NO' }}</p>
+                </div>
+            </div>
+
+            <div class="corp-card overflow-hidden">
+                <div class="p-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-navy serif-heading">Active Asset Holdings</h3>
+                    <button class="text-xs border border-gray-300 px-3 py-1 rounded-sm hover:bg-gray-100 transition">Export CSV</button>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Counterparty</th>
+                            <th class="text-right">Capital Allocated (₹)</th>
+                            <th>Effective Yield</th>
+                            <th>Maturity</th>
+                            <th>Inception Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if portfolio %}
+                            {% for p in portfolio %}
+                            <tr>
+                                <td class="font-medium text-navy">{{ p[0] }}</td>
+                                <td class="text-right font-medium">₹ {{ "{:,.0f}".format(p[1]) if p[1] else 0 }}</td>
+                                <td class="text-gold font-bold">{{ p[2] }}%</td>
+                                <td class="text-sm text-gray-600">{{ p[4] }} Months</td>
+                                <td class="text-xs text-gray-500">{{ p[3] }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="5" class="text-center text-gray-400 py-8 italic text-sm">Portfolio empty. Await algorithmic allocation.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BORROWER DASHBOARD SECTION -->
+        <div id="borrower-dashboard" class="hidden w-full px-4 sm:px-8 lg:px-12 py-10">
+            <div class="border-b border-gray-300 pb-4 mb-8">
+                <p class="text-xs text-gray-500 uppercase tracking-widest font-bold mb-1">Corporate Borrower</p>
+                <h2 class="text-3xl font-bold text-navy serif-heading">Facility Status Tracker</h2>
+                <p class="text-gray-600 mt-2">Welcome, <span class="font-medium text-navy">{{ user_name }}</span></p>
+            </div>
+
+            {% if loan %}
+            <div class="corp-card p-8 border-l-4 border-gold mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Credit Facility Status</p>
+                        <h3 class="text-2xl font-bold text-navy serif-heading uppercase">{{ loan[3] }}</h3>
+                    </div>
+                    <div class="md:text-right">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Approved Rate & Term</p>
+                        <h3 class="text-xl font-bold text-navy">{{ loan[2] }}% <span class="text-sm font-normal text-gray-500">| {{ loan[4] }} Months</span></h3>
+                    </div>
+                </div>
+
+                {% set percent = (loan[1] / loan[0] * 100) | round(1) if loan[0] > 0 else 0 %}
+                <div class="w-full bg-gray-100 h-2 mb-3 rounded-sm overflow-hidden border border-gray-200">
+                    <div class="bg-navy h-full transition-all duration-1000" style="width: {{ percent }}%"></div>
+                </div>
+                <div class="flex justify-between text-sm font-medium">
+                    <span class="text-navy">Filled: ₹ {{ "{:,.0f}".format(loan[1]) if loan[1] else 0 }}</span>
+                    <span class="text-gray-500">Total Requested: ₹ {{ "{:,.0f}".format(loan[0]) if loan[0] else 0 }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="corp-card overflow-hidden">
+                <div class="p-5 border-b border-gray-200 bg-gray-50">
+                    <h3 class="font-bold text-navy serif-heading">Syndicate Participants (Capital Providers)</h3>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Entity Name</th>
+                            <th class="text-right">Capital Provided (₹)</th>
+                            <th>Allocation Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if backers %}
+                            {% for b in backers %}
+                            <tr>
+                                <td class="font-medium text-navy">{{ b[0] }}</td>
+                                <td class="text-right font-medium">₹ {{ "{:,.0f}".format(b[1]) if b[1] else 0 }}</td>
+                                <td class="text-xs text-gray-500">{{ b[2] }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="3" class="text-center text-gray-400 py-8 italic text-sm">Facility currently open. Awaiting algorithmic matching.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-[#060D19] text-gray-500 py-8 text-center text-xs border-t border-gray-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col items-center">
+            <p class="mb-2">© 2026 Algorithmic Lending Engine. Created for DBMS Enterprise Infrastructure.</p>
+            <div class="flex gap-4 justify-center uppercase tracking-widest font-semibold mt-2">
+                <span>ACID Compliant</span>
+                <span>•</span>
+                <span>3NF Normalized</span>
+                <span>•</span>
+                <span>Secure Routing</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // State variables for tracking chart rendering
+        let chartsRendered = false;
+        let publicChartsRendered = false;
+
+        // Router Logic
+        function showSection(sectionId) {
+            const sections = ['landing', 'compliance', 'about', 'market-stats', 'onboarding', 'login', 'admin-dashboard', 'lender-dashboard', 'borrower-dashboard', 'registration-success'];
+
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+
+            const targetEl = document.getElementById(sectionId);
+            if (targetEl) targetEl.classList.remove('hidden');
+
+            if(sectionId === 'onboarding') switchTab('basic');
+
+            // Render Market Stats Charts if opened
+            if(sectionId === 'market-stats' && !publicChartsRendered) {
+                renderPublicCharts();
+                publicChartsRendered = true;
+            }
+        }
+
+        // Validation Logic
+        function validateAndSwitch(currentStepId, nextTabName) {
+            const currentStep = document.getElementById(currentStepId);
+            const inputs = currentStep.querySelectorAll('input, select');
+            let isValid = true;
+
+            for (let input of inputs) {
+                if (input.offsetParent !== null && !input.checkValidity()) {
+                    input.reportValidity();
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid) {
+                switchTab(nextTabName);
+            }
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            const tabs = ['basic', 'kyc', 'profile', 'agreement'];
+
+            tabs.forEach(t => {
+                const stepEl = document.getElementById('step-' + t);
+                const tabEl = document.getElementById('tab-' + t);
+                if (stepEl) stepEl.classList.add('hidden');
+                if (tabEl) {
+                    tabEl.className = 'flex-1 px-4 py-4 text-sm font-medium step-inactive focus:outline-none transition whitespace-nowrap';
+                }
+            });
+
+            const targetStep = document.getElementById('step-' + tabName);
+            const targetTab = document.getElementById('tab-' + tabName);
+
+            if (targetStep) targetStep.classList.remove('hidden');
+            if (targetTab) {
+                targetTab.className = 'flex-1 px-4 py-4 text-sm font-medium step-active focus:outline-none transition whitespace-nowrap';
+            }
+
+            if(tabName === 'profile') updateProfileView();
+        }
+
+        // Dynamic Field Logic based on Role
+        function updateProfileView() {
+            const roleEl = document.getElementById('user_type');
+            if (!roleEl) return;
+
+            const role = roleEl.value;
+            const alertBox = document.getElementById('alert-role');
+            const borrowerFields = document.getElementById('fields-borrower');
+            const lenderFields = document.getElementById('fields-lender');
+
+            if(borrowerFields) {
+                borrowerFields.classList.add('hidden');
+                borrowerFields.classList.remove('grid');
+                borrowerFields.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            }
+            if(lenderFields) {
+                lenderFields.classList.add('hidden');
+                lenderFields.classList.remove('grid');
+                lenderFields.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            }
+            if(alertBox) alertBox.classList.add('hidden');
+
+            if (role === 'borrower') {
+                if(borrowerFields) {
+                    borrowerFields.classList.remove('hidden');
+                    borrowerFields.classList.add('grid');
+                    borrowerFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (role === 'lender') {
+                if(lenderFields) {
+                    lenderFields.classList.remove('hidden');
+                    lenderFields.classList.add('grid');
+                    lenderFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else {
+                if(alertBox) alertBox.classList.remove('hidden');
+            }
+        }
+
+        // Final Form Submission Using AJAX (Fetch API) to prevent page reload
+        async function finalizeRegistration() {
+            const form = document.getElementById('registrationForm');
+            const inputs = form.querySelectorAll('input:not([disabled]), select:not([disabled])');
+
+            for (let input of inputs) {
+                if (!input.checkValidity()) {
+                    const stepDiv = input.closest('div[id^="step-"]');
+                    if (stepDiv) {
+                        const tabName = stepDiv.id.replace('step-', '');
+                        switchTab(tabName);
+                        setTimeout(() => input.reportValidity(), 50);
+                    }
+                    return;
+                }
+            }
+
+            // Show Loading State
+            const btn = document.getElementById('btn-final-reg');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Executing Data Transfer...';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/register_full', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const resultText = await response.text();
+
+                if (resultText.includes('SUCCESS')) {
+                    // Success! Show the beautiful modal and reset the form.
+                    form.reset();
+                    switchTab('basic');
+                    showSection('registration-success');
+                } else if (resultText.includes('CRITICAL SYSTEM ERROR')) {
+                    // Parse the error message specifically from app.py string format
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = resultText;
+                    alert("Registration Failed: " + tempDiv.textContent.replace('Return to Portal', ''));
+                } else {
+                    document.body.innerHTML = resultText;
+                }
+            } catch (error) {
+                alert("Network Error: Could not connect to the allocation engine.");
+            } finally {
+                // Revert Loading State
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+
+        // Toggle Logic for Analytics Section
+        function toggleAnalytics() {
+            const section = document.getElementById('analytics-section');
+            const tablesView = document.getElementById('admin-tables-view');
+
+            // Update Title
+            document.getElementById('admin-page-title').innerText = 'Global Analytics';
+            document.getElementById('admin-page-subtitle').innerText = 'Platform Performance & Distribution Metrics';
+
+            // Show Charts, Hide Tables
+            section.classList.remove('hidden');
+            tablesView.classList.add('hidden');
+
+            if (!chartsRendered) {
+                renderAdminCharts();
+                chartsRendered = true;
+            }
+        }
+
+        // Toggle Logic back to Overview Tables
+        function showAdminOverview() {
+            const section = document.getElementById('analytics-section');
+            const tablesView = document.getElementById('admin-tables-view');
+
+            // Reset Title
+            document.getElementById('admin-page-title').innerText = 'Global Liquidity Pool';
+            document.getElementById('admin-page-subtitle').innerText = 'Live Algorithmic Allocation Overview';
+
+            // Hide Charts, Show Tables
+            section.classList.add('hidden');
+            tablesView.classList.remove('hidden');
+        }
+
+        // Chart.js Rendering Logic (Public Market Stats)
+        function renderPublicCharts() {
+            if (!document.getElementById('publicLiquidityChart')) return;
+
+            const colorNavy = '#0B172A';
+            const colorGold = '#A67C00';
+            const colorGray = '#E2E8F0';
+
+            const ctxPublic = document.getElementById('publicLiquidityChart').getContext('2d');
+
+            // Mock Historical Data to make the platform look active
+            new Chart(ctxPublic, {
+                type: 'line',
+                data: {
+                    labels: ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'],
+                    datasets: [{
+                        label: 'Total Deployed Capital (in Millions ₹)',
+                        data: [4.2, 6.8, 8.5, 12.1, 18.4, 22.5],
+                        borderColor: colorGold,
+                        backgroundColor: 'rgba(166, 124, 0, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: colorNavy,
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: colorGray },
+                            ticks: {
+                                font: { family: 'Inter' },
+                                callback: function(value) { return '₹' + value + 'M'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart.js Rendering Logic (Admin Dashboard)
+        function renderAdminCharts() {
+            if (!document.getElementById('capitalChart')) return;
+
+            // Chart Colors matching the new theme
+            const colorNavy = '#0B172A';
+            const colorGold = '#A67C00';
+            const colorGray = '#E2E8F0';
+
+            const ctxCapital = document.getElementById('capitalChart').getContext('2d');
+            new Chart(ctxCapital, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Idle Capital (₹)', 'Allocated Capital (₹)'],
+                    datasets: [{
+                        data: [
+                            {{ capital_analytics[0] if capital_analytics else 0 }},
+                            {{ capital_analytics[1] if capital_analytics else 0 }}
+                        ],
+                        backgroundColor: [colorGold, colorNavy],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            const ctxRisk = document.getElementById('riskChart').getContext('2d');
+            new Chart(ctxRisk, {
+                type: 'bar',
+                data: {
+                    labels: [{% for r in risk_analytics %}'{{ r[0] }}',{% endfor %}],
+                    datasets: [{
+                        label: 'Number of Investors',
+                        data: [{% for r in risk_analytics %}{{ r[1] }},{% endfor %}],
+                        backgroundColor: colorNavy,
+                        borderRadius: 2,
+                        barPercentage: 0.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter' } }, grid: { color: colorGray } },
+                        x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
+                    }
+                }
+            });
+        }
+
+        // DANGER: THIS MUST STAY IN THE HTML FILE
+        // This relies on Flask Jinja logic. Wrapped safely.
+        window.onload = function() {
+            const role = "{{ role|default('') }}";
+            if (role === 'admin') {
+                showSection('admin-dashboard');
+            } else if (role === 'lender') {
+                showSection('lender-dashboard');
+            } else if (role === 'borrower') {
+                showSection('borrower-dashboard');
+            }
+        };
+    </script>
+</body>
+</html>
