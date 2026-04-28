@@ -149,8 +149,6 @@ def register_full():
     cursor = conn.cursor()
 
     try:
-        conn.start_transaction()
-
         full_name = request.form['full_name']
         email = request.form['email'].strip().lower()
         mobile = request.form['mobile']
@@ -235,9 +233,6 @@ def run_engine():
         for lender in active_lenders:
             lender_id, amount, min_roi, max_roi = lender
 
-            # Start ACID Transaction for this specific investor
-            conn.start_transaction()
-
             # Find ONE open loan matching the criteria. FOR UPDATE locks the row.
             cursor.execute(
                 "SELECT LoanID, (Amount_Needed - Amount_Funded) FROM Loan_Requests WHERE Status = 'OPEN' AND Expected_Interest >= %s LIMIT 1 FOR UPDATE",
@@ -298,8 +293,6 @@ def simulate_emi():
     msg = ""
 
     try:
-        conn.start_transaction()
-
         cursor.execute('''
             SELECT lr.UserID, im.InvestorID, im.Amount_Allocated, lr.Expected_Interest, lr.Tenure
             FROM Investment_Mapping im
@@ -347,7 +340,7 @@ def generate_invoice(mapping_id):
                u2.FullName as BorrowerName, u2.Email as BorEmail,
                im.Amount_Allocated, lr.Expected_Interest, im.Allocation_Date
         FROM Investment_Mapping im
-        JOIN Investors_Profiles u1 ON im.InvestorID = u1.UserID
+        JOIN Users u1 ON im.InvestorID = u1.UserID
         JOIN Loan_Requests lr ON im.LoanID = lr.LoanID
         JOIN Users u2 ON lr.UserID = u2.UserID
         WHERE im.MappingID = %s
