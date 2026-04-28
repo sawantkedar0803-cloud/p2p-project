@@ -2,13 +2,14 @@ import os
 import mysql.connector
 from flask import Flask, render_template, request
 
-# --- THE 100% BULLETPROOF VERCEL FIX ---
-# This automatically finds your HTML and Video files whether they are in folders or not!
+# --- VERCEL FIX: Tell Flask exactly where the folders are ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates') if os.path.exists(os.path.join(BASE_DIR, 'templates')) else BASE_DIR
 STATIC_DIR = os.path.join(BASE_DIR, 'static') if os.path.exists(os.path.join(BASE_DIR, 'static')) else BASE_DIR
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
+
+
 def get_db_connection():
     return mysql.connector.connect(
         host="gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
@@ -17,9 +18,11 @@ def get_db_connection():
         database="p2p_enterprise"
     )
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -52,7 +55,7 @@ def login():
         ''')
         real_lenders = cursor.fetchall()
 
-        # Diversification Map (With Txn ID and Tenure)
+        # Diversification Map
         cursor.execute('''
             SELECT u1.FullName as InvestorName, u2.FullName as BorrowerName, 
                    im.Amount_Allocated, lr.Expected_Interest, im.Allocation_Date,
@@ -84,11 +87,11 @@ def login():
         cursor.close()
         conn.close()
 
-        # FIXED: Added capital_analytics and risk_analytics to the render_template variables
-        return render_template('index.html', role='admin', borrowers=real_borrowers, lenders=real_lenders, mappings=mappings, capital_analytics=capital_analytics, risk_analytics=risk_analytics)
+        return render_template('index.html', role='admin', borrowers=real_borrowers, lenders=real_lenders,
+                               mappings=mappings, capital_analytics=capital_analytics, risk_analytics=risk_analytics)
 
     # ==========================================
-    # 2. NORMAL USER LOGIN LOGIC (Investor or Borrower)
+    # 2. NORMAL USER LOGIN LOGIC
     # ==========================================
     cursor.execute("SELECT UserID, FullName, UserType FROM Users WHERE Email = %s AND Password = %s", (email, password))
     user = cursor.fetchone()
@@ -96,16 +99,13 @@ def login():
     if user:
         user_id = user[0]
         full_name = user[1]
-        # Force exact match by strictly normalizing the database string
         user_type = str(user[2]).strip().lower()
 
         if user_type == 'lender':
-
-            # Fetch Investor's personal profile
-            cursor.execute("SELECT InvestAmount, MinROI, MaxROI, AutoInvest FROM Lender_Profiles WHERE UserID = %s", (user_id,))
+            cursor.execute("SELECT InvestAmount, MinROI, MaxROI, AutoInvest FROM Lender_Profiles WHERE UserID = %s",
+                           (user_id,))
             profile = cursor.fetchone()
 
-            # Fetch ONLY the loans this investor funded (My Portfolio)
             cursor.execute('''
                 SELECT u.FullName as BorrowerName, im.Amount_Allocated, lr.Expected_Interest, im.Allocation_Date, lr.Tenure
                 FROM Investment_Mapping im
@@ -117,14 +117,15 @@ def login():
 
             cursor.close()
             conn.close()
-            return render_template('index.html', role='lender', user_name=full_name, profile=profile, portfolio=portfolio)
+            return render_template('index.html', role='lender', user_name=full_name, profile=profile,
+                                   portfolio=portfolio)
 
         elif user_type == 'borrower':
-            # Fetch Borrower's personal loan status
-            cursor.execute("SELECT Amount_Needed, Amount_Funded, Expected_Interest, Status, Tenure FROM Loan_Requests WHERE UserID = %s", (user_id,))
+            cursor.execute(
+                "SELECT Amount_Needed, Amount_Funded, Expected_Interest, Status, Tenure FROM Loan_Requests WHERE UserID = %s",
+                (user_id,))
             loan = cursor.fetchone()
 
-            # Fetch the investors who funded this specific borrower (My Backers)
             cursor.execute('''
                 SELECT u.FullName as InvestorName, im.Amount_Allocated, im.Allocation_Date
                 FROM Investment_Mapping im
@@ -137,7 +138,6 @@ def login():
             conn.close()
             return render_template('index.html', role='borrower', user_name=full_name, loan=loan, backers=backers)
 
-    # If email/password is completely wrong
     cursor.close()
     conn.close()
     return f"<h3>Authentication Failed</h3><p>Invalid credentials.</p><a href='/'>Go Back</a>"
@@ -152,7 +152,7 @@ def register_full():
         conn.start_transaction()
 
         full_name = request.form['full_name']
-        email = request.form['email'].strip().lower() # Normalize email
+        email = request.form['email'].strip().lower()
         mobile = request.form['mobile']
         password = request.form['password']
         user_type = request.form['user_type']
@@ -216,6 +216,10 @@ def register_full():
 
     return f"<h3>{result_msg}</h3><br><a href='/'>Return to Portal</a>"
 
+
+# ==========================================
+# REWRITTEN FOR TIDB: PYTHON-LEVEL ACID TRANSACTIONS
+# ==========================================
 @app.route('/run_engine', methods=['POST'])
 def run_engine():
     conn = get_db_connection()
@@ -223,26 +227,47 @@ def run_engine():
     allocation_logs = []
 
     try:
-        cursor.execute('''
-            SELECT UserID, InvestAmount, MinROI, MaxROI 
-            FROM Lender_Profiles 
-            WHERE AutoInvest = 'yes' AND InvestAmount > 0
-        ''')
+        # 1. Fetch all active auto-invest lenders
+        cursor.execute(
+            "SELECT UserID, InvestAmount, MinROI, MaxROI FROM Lender_Profiles WHERE AutoInvest = 'yes' AND InvestAmount > 0")
         active_lenders = cursor.fetchall()
 
         for lender in active_lenders:
-            lender_id = lender[0]
-            amount = lender[1]
-            min_roi = lender[2]
-            max_roi = lender[3]
+            lender_id, amount, min_roi, max_roi = lender
 
-            cursor.callproc('AutoAllocateFunds', [lender_id, amount, min_roi, max_roi])
+            # Start ACID Transaction for this specific investor
+            conn.start_transaction()
 
-            for result in cursor.stored_results():
-                msg = result.fetchone()[0]
-                allocation_logs.append(f"Investor #{lender_id}: {msg}")
+            # Find ONE open loan matching the criteria. FOR UPDATE locks the row.
+            cursor.execute(
+                "SELECT LoanID, (Amount_Needed - Amount_Funded) FROM Loan_Requests WHERE Status = 'OPEN' AND Expected_Interest >= %s LIMIT 1 FOR UPDATE",
+                (min_roi,))
+            loan = cursor.fetchone()
 
-        conn.commit()
+            if loan:
+                loan_id, gap = loan
+                allocated = gap if amount > gap else amount
+
+                # Update database tables
+                cursor.execute(
+                    "INSERT INTO Investment_Mapping (InvestorID, LoanID, Amount_Allocated) VALUES (%s, %s, %s)",
+                    (lender_id, loan_id, allocated))
+                cursor.execute("UPDATE Loan_Requests SET Amount_Funded = Amount_Funded + %s WHERE LoanID = %s",
+                               (allocated, loan_id))
+                cursor.execute("UPDATE Lender_Profiles SET InvestAmount = InvestAmount - %s WHERE UserID = %s",
+                               (allocated, lender_id))
+
+                # Check if loan is full
+                cursor.execute("SELECT Amount_Funded, Amount_Needed FROM Loan_Requests WHERE LoanID = %s", (loan_id,))
+                f_amt, n_amt = cursor.fetchone()
+                if f_amt >= n_amt:
+                    cursor.execute("UPDATE Loan_Requests SET Status = 'FILLED' WHERE LoanID = %s", (loan_id,))
+
+                conn.commit()
+                allocation_logs.append(f"Investor #{lender_id}: Success: Allocated Rs. {allocated} to Loan {loan_id}")
+            else:
+                conn.rollback()
+                allocation_logs.append(f"Investor #{lender_id}: Failed: No matching loans found in ROI range")
 
     except Exception as e:
         conn.rollback()
@@ -265,6 +290,7 @@ def run_engine():
     </div>
     """
 
+
 @app.route('/simulate_emi', methods=['POST'])
 def simulate_emi():
     conn = get_db_connection()
@@ -272,10 +298,27 @@ def simulate_emi():
     msg = ""
 
     try:
-        cursor.callproc('SimulateNextMonthEMI')
-        for result in cursor.stored_results():
-            msg = result.fetchone()[0]
+        conn.start_transaction()
+
+        cursor.execute('''
+            SELECT lr.UserID, im.InvestorID, im.Amount_Allocated, lr.Expected_Interest, lr.Tenure
+            FROM Investment_Mapping im
+            JOIN Loan_Requests lr ON im.LoanID = lr.LoanID
+            WHERE lr.Status = 'FILLED'
+        ''')
+        mappings = cursor.fetchall()
+
+        for mapping in mappings:
+            b_id, i_id, alloc, interest, tenure = mapping
+
+            # Calculate EMI (Principal + Profit)
+            emi = (float(alloc) + (float(alloc) * (float(interest) / 100.0))) / float(tenure)
+
+            cursor.execute("UPDATE Borrower_Profiles SET BankBalance = BankBalance - %s WHERE UserID = %s", (emi, b_id))
+            cursor.execute("UPDATE Lender_Profiles SET InvestAmount = InvestAmount + %s WHERE UserID = %s", (emi, i_id))
+
         conn.commit()
+        msg = "Success: 1 Month of EMI processed and routed across all accounts."
     except Exception as e:
         conn.rollback()
         msg = f"System Error: {str(e)}"
@@ -293,6 +336,7 @@ def simulate_emi():
     </div>
     """
 
+
 @app.route('/invoice/<int:mapping_id>')
 def generate_invoice(mapping_id):
     conn = get_db_connection()
@@ -303,7 +347,7 @@ def generate_invoice(mapping_id):
                u2.FullName as BorrowerName, u2.Email as BorEmail,
                im.Amount_Allocated, lr.Expected_Interest, im.Allocation_Date
         FROM Investment_Mapping im
-        JOIN Users u1 ON im.InvestorID = u1.UserID
+        JOIN Investors_Profiles u1 ON im.InvestorID = u1.UserID
         JOIN Loan_Requests lr ON im.LoanID = lr.LoanID
         JOIN Users u2 ON lr.UserID = u2.UserID
         WHERE im.MappingID = %s
@@ -343,6 +387,7 @@ def generate_invoice(mapping_id):
         </div>
     </div>
     """
+
 
 if __name__ == '__main__':
     app.run(debug=True)
